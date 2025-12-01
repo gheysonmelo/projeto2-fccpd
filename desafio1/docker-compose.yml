@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  web:
+    build: ./web
+    container_name: ch1_web
+    networks:
+      - custom_net
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  client:
+    build: ./client
+    container_name: ch1_client
+    networks:
+      - custom_net
+    depends_on:
+      - web
+    restart: unless-stopped
+
+networks:
+  custom_net:
+    name: ch1_custom_net
+    driver: bridge
