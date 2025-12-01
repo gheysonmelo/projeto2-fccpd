@@ -1,0 +1,64 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    container_name: ch3_db
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demopw
+      POSTGRES_DB: demo_db
+    volumes:
+      - ch3_pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ch3_net
+
+  cache:
+    image: redis:7
+    container_name: ch3_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+    networks:
+      - ch3_net
+
+  web:
+    build: ./web
+    container_name: ch3_web
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: demo
+      DB_PASS: demopw
+      DB_NAME: demo_db
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
+      FLASK_ENV: production
+    ports:
+      - "8080:8080"
+    networks:
+      - ch3_net
+    restart: unless-stopped
+
+volumes:
+  ch3_pgdata:
+    name: ch3_pgdata
+
+networks:
+  ch3_net:
+    driver: bridge
