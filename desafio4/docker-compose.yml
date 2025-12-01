@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  servico-a:
+    build: ./servico-a
+    container_name: ms_service_a
+    ports:
+      - "5000:5000" # expõe para o host (útil para testes)
+    networks:
+      - msnet
+    restart: unless-stopped
+
+  servico-b:
+    build: ./servico-b
+    container_name: ms_service_b
+    ports:
+      - "5001:5001"
+    environment:
+      SERVICE_A_HOST: servico-a
+      SERVICE_A_PORT: 5000
+    depends_on:
+      - servico-a
+    networks:
+      - msnet
+    restart: unless-stopped
+
+networks:
+  msnet:
+    driver: bridge
