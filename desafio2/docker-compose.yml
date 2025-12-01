@@ -1,0 +1,34 @@
+# arquivo: docker-compose.yml
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    container_name: ch2_db
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: demopw
+      POSTGRES_DB: demo_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data # volume nomeado para persistência
+      - ./db/init:/docker-entrypoint-initdb.d:ro # scripts de inicialização
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  reader:
+    build: ./reader
+    container_name: ch2_reader
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: demo
+      PGPASSWORD: demopw
+      PGDATABASE: demo_db
+    depends_on:
+      - db
+    restart: "no" # reader é usado on-demand para checar dados
+
+volumes:
+  pgdata:
+    name: ch2_pgdata
